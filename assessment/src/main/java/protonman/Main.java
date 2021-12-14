@@ -10,35 +10,30 @@ public class Main {
     public static void main(String[] args) throws IOException {
         
         // assume I can read the command line as variable text
-        String text, eachText, docNo, eachDir;
+        String eachText, eachDir;
         int portNo = 0;
         ArrayList <String> directories = new ArrayList<>();
 
-        System.out.println("Args is " +args);
-        text = "--port 8080 --docRoot ./target:opt/tmp/www";
+    // text = "--port 8080 --docRoot ./target:opt/tmp/www";
         
     //  Task 3 command line options
 
         // first check whether input is empty
-        // if null, then File directory = new File("assessment\\static");
-
-
-        // check inputs for correct command
-        try {
-            Scanner scan = new Scanner(text);
+        if (args.length==0) {
+            portNo = 3000;
+            directories.add("\\assessment\\static");
+        } else {
             
-            while (scan.hasNext()) {
-                eachText = scan.next();
-                System.out.println(eachText);
-                    
-                //
+            for (int i = 0; i < args.length; i++) {
+                eachText = args[i];
+
                 if ("--port".equals(eachText)) {
-                    portNo = Integer.valueOf(scan.next());
-    
+                    i++;
+                    portNo = Integer.valueOf(args[i]);
+                    
                 } else if ("--docRoot".equals(eachText)) {
-                    System.out.println("specify doc");
-                    docNo = scan.next();
-                    Scanner pathDir = new Scanner(docNo);
+                    i++;
+                    Scanner pathDir = new Scanner(args[i]);
                     pathDir.useDelimiter(":");
                     while (pathDir.hasNext()) {
                         eachDir = pathDir.next();
@@ -49,24 +44,13 @@ public class Main {
                 } else {
                     // do nothing
                 }
-            }
-            scan.close();
-
-        } catch (Exception e) { // to catch null when there are no inputs or scan is finished
-            System.out.println("error");
-            portNo = 3000;
-            System.out.println(portNo);      
-        }  
+            }                    
+                
+        }
         
-        
-        System.out.println(portNo);
-        System.out.println(directories);
-        
-
     // Task 4 call server
         HttpServer server = new HttpServer(portNo, directories);
         server.start();
-
 
     }
 

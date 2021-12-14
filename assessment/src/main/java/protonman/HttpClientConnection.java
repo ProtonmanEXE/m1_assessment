@@ -7,17 +7,18 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class HttpClientConnection implements Runnable {
     private final Socket socket;
-    private int id;
-    private String inputFile;
-    private static String command, command2, resource;
+    private ArrayList <String> directories = new ArrayList<>();
+    private String command, command2, fileName, extension, resource, directory;
+    private boolean fileUpload = false;
 
-    public HttpClientConnection(Socket socket, String inputFile) {
+    public HttpClientConnection(Socket socket, ArrayList<String> inputFile) {
         this.socket = socket;
-        this.inputFile = inputFile;
+        this.directories = inputFile;
     }
 
     @Override
@@ -34,66 +35,88 @@ public class HttpClientConnection implements Runnable {
             System.out.println("Something went wrong...");
         }
 
-        while (!"close".equals(line) && null != line) {
-            
-            try {
-                
-                // if ("get-cookie".equals(line)) {
-                //     System.out.println("Sending a cookie to client " + id);
-                //     out.println("cookie-text " + 
-                //             new Cookie().getCookie(inputFile));
-                //     out.flush();
-                //     line = in.readLine();
-                // } else {
-                //     out.println("Server: you said " + line);
-                //     out.flush();
-                //     line = in.readLine();
-                // }
+        // String line = "GET /index.html HTTP/1.1";
+        Scanner scan = new Scanner(line);
+        command = scan.next();
+        command2 = scan.nextLine();
 
-            } catch (Exception e) {
-                e.printStackTrace();
-                break;
-            } 
-        }
-    }
-}
-
-public static void main(String[] args) {
-    String line = "GET /index.html HTTP/1.1";
-    Scanner scan = new Scanner(line);
-    command = scan.next();
-    command2 = scan.nextLine();
-
-    // Task 6-1 Not a Get method
-    if (!"GET".equals(command)) {
-        System.out.println("This is not GET");
-    } else {
-        // Task 6-2 Resource does not exist
-        Scanner scan2 = new Scanner(command2);
-        resource = scan.next();
-        File database = new File(inputFile);
-        int i = 0;
-        for (File f: database.listFiles()) {
-            i++;
-            if (f.getName()==command2) {
-                Check = true;
-            } else {
-                Check = false;
-            }
-            
+        // Task 6-1 Not a Get method
+        if (!"GET".equals(command)) {
+            out.println("405 Method Not Allowed");
+            out.println(command +" not supported");
+            out.flush();
+            closeEverything(socket, in, out);
         
+        } else {                
+            Scanner scan2 = new Scanner(command2);
+            resource = scan2.next();
+
+            for (int j = 0; j < directories.size(); j++) {
+                directory = directories.get(0);
+                File database = new File(directory);
+                int i = 0;
+                    for (File f: database.listFiles()) {
+                    i++;
+
+        // Task 6-3 Resource exist
+                    if (f.getName()==resource) {
+                        fileName = f.getName();
+                        int index = fileName.lastIndexOf('.');
+                            if(index > 0) 
+                            extension = fileName.substring(index + 1);
+                            fileUpload = true;
+                            // add in code to send file to website
+                            
+        // Task 6-4 Resource exist and is a PNG
+                            if ("png".equals(extension)) {
+                            fileUpload = true;
+                            // add in code to send file to website
+                            out.println("200 OK");
+                            out.println("Content-Type: image/png");
+                            out.println("<resource contents as bytes>");
+                            out.flush();
+                            closeEverything(socket, in, out);
+                            break;
+                            } else {
+                                out.println("200 OK");
+                                out.println("<resource contents as bytes>");
+                                out.flush();
+                                closeEverything(socket, in, out);
+                                break;
+                            }
+        
+                    }
+                
+                    }
+                    
+            }
+        // Task 6-2 Resource does not exist
+            if (!fileUpload) {
+                out.println("404 Method Not Allowed");
+                out.println(resource +" not found");
+                out.flush();
+                closeEverything(socket, in, out);
+            } 
+
+        }
+    
     }
 
-    // Task 6-3 Resource exist
-
-    // Task 6-4 Resource exist and is a PNG
-
-    
-
-
-
-
-
-
-
+    public void closeEverything(Socket socket, BufferedReader in, PrintWriter out) {
+            try {
+                if (socket != null) {
+                    socket.close();
+                } 
+                if (in != null) {
+                    in.close();
+                }  
+                if (out != null) {
+                    out.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+    }
 }
+
+

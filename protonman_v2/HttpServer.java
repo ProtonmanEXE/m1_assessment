@@ -63,7 +63,7 @@ public class HttpServer {
 
             while (true) {
                 socket = serverSocket.accept();
-                HttpClientConnection worker = new HttpClientConnection(socket, list);
+                HttpClientConnection worker = new HttpClientConnection(socket, inputFile);
                 threadPool.submit(worker);
             }
 
